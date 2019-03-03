@@ -41,7 +41,7 @@ using (ManualResetEvent mre = new ManualResetEvent(false))
         _hook = new HardwareHook();
         _frame = new DispatcherFrame(true);
 
-        // Proceed with the constructor.
+        // Proceed with the caller method.
         mre.Set();
 
         // Start the message loop.
