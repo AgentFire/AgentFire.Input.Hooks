@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.329
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentFire.Input.Hooks", "AgentFire.Input.Hooks\AgentFire.Input.Hooks.csproj", "{C179569F-3355-4324-80C5-81EEB4384FAC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C179569F-3355-4324-80C5-81EEB4384FAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C179569F-3355-4324-80C5-81EEB4384FAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C179569F-3355-4324-80C5-81EEB4384FAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C179569F-3355-4324-80C5-81EEB4384FAC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AAD9FF8C-D490-491D-A0E8-903B8DF270B1}
+	EndGlobalSection
+EndGlobal
