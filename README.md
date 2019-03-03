@@ -8,18 +8,22 @@ HardwareHook hook = new HardwareHook();
     
 2. Use it's events.
 
-        _hook.KeyEvent += Hook_KeyEvent; // Your handler
-        _hook.MouseEvent += Hook_MouseEvent; // Your handler
+```csharp
+_hook.KeyEvent += Hook_KeyEvent; // Your handler
+_hook.MouseEvent += Hook_MouseEvent; // Your handler
+```
     
 3. Eat an input if you like.
 
-        private void Hook_KeyEvent(object sender, RawKeyEventArgs args)
-        {
-            if (args.Key == Key.CapsLock)
-            {
-                args.EatInput = true;
-            }
-        }
+```csharp
+private void Hook_KeyEvent(object sender, RawKeyEventArgs args)
+{
+    if (args.Key == Key.CapsLock)
+    {
+        args.EatInput = true;
+    }
+}
+```
     
 It is that easy.
 Now for the "what's the catch" part:
@@ -28,47 +32,51 @@ Now for the "what's the catch" part:
 
 Assuming you are using WPF's engine, here is a nice way to start a new thread and the loop inside it:
 
-    using (ManualResetEvent mre = new ManualResetEvent(false))
+```csharp
+using (ManualResetEvent mre = new ManualResetEvent(false))
+{
+    Thread thread = new Thread(() =>
     {
-        Thread thread = new Thread(() =>
-        {
-            // Initiate the hook and the frame on this thread.
-            _hook = new HardwareHook();
-            _frame = new DispatcherFrame(true);
+        // Initiate the hook and the frame on this thread.
+        _hook = new HardwareHook();
+        _frame = new DispatcherFrame(true);
 
-            // Proceed with the constructor.
-            mre.Set();
+        // Proceed with the constructor.
+        mre.Set();
 
-            // Start the message loop.
-            Dispatcher.PushFrame(_frame);
-        })
-        {
-            IsBackground = false,
+        // Start the message loop.
+        Dispatcher.PushFrame(_frame);
+    })
+    {
+        IsBackground = false,
 
-            // This thread should be more prioritized over UI thread and all others.
-            Priority = ThreadPriority.Highest
-        };
+        // This thread should be more prioritized over UI thread and all others.
+        Priority = ThreadPriority.Highest
+    };
 
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
+    thread.SetApartmentState(ApartmentState.STA);
+    thread.Start();
 
-        mre.WaitOne();
-        
-        _hook.KeyEvent += Hook_KeyEvent; // Your handler
-        _hook.MouseEvent += Hook_MouseEvent; // Your handler
-    }
+    mre.WaitOne();
+
+    _hook.KeyEvent += Hook_KeyEvent; // Your handler
+    _hook.MouseEvent += Hook_MouseEvent; // Your handler
+}
+```
     
 ### 2. Don't forget to clean up
 
-    // Unsubscribe.
-    _hook.KeyEvent -= Hook_KeyEvent;
-    _hook.MouseEvent -= Hook_MouseEvent;
-    
-    // Stop the message loop if you want.
-    _frame.Continue = false;
-    
-    // The dispose itself.
-    _hook.Dispose();
+```csharp
+// Unsubscribe.
+_hook.KeyEvent -= Hook_KeyEvent;
+_hook.MouseEvent -= Hook_MouseEvent;
+
+// Stop the message loop if you want.
+_frame.Continue = false;
+
+// The dispose itself.
+_hook.Dispose();
+```
     
 ### 3. Other notes
 
