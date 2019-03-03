@@ -6,18 +6,18 @@
     
 2. Use it's events.
 
-    _hook.KeyEvent += Hook_KeyEvent; // Your handler
-    _hook.MouseEvent += Hook_MouseEvent; // Your handler
+        _hook.KeyEvent += Hook_KeyEvent; // Your handler
+        _hook.MouseEvent += Hook_MouseEvent; // Your handler
     
 3. Eat an input if you like.
 
-    private void Hook_KeyEvent(object sender, RawKeyEventArgs args)
-    {
-        if (args.Key == Key.CapsLock)
+        private void Hook_KeyEvent(object sender, RawKeyEventArgs args)
         {
-            args.EatInput = true;
+            if (args.Key == Key.CapsLock)
+            {
+                args.EatInput = true;
+            }
         }
-    }
     
 It is that easy.
 Now for the "what's the catch" part:
