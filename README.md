@@ -2,7 +2,7 @@
 
 1. Instantiate your application-wide hook.
 
-    HardwareHook hook = new HardwareHook();
+        HardwareHook hook = new HardwareHook();
     
 2. Use it's events.
 
