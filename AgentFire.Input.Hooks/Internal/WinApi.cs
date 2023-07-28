@@ -1,16 +1,93 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace AgentFire.Input.Hooks.Internal;
 
+[SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "No need for now")]
 internal static class WinApi
 {
-    private static readonly nint _currentModuleHandle;
+    private static readonly nint _currentModuleHandle = GetModuleHandle(null);
 
-    static WinApi()
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PointParams
     {
-        _currentModuleHandle = GetModuleHandle(null);
+        public int X;
+        public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HookParams
+    {
+        public PointParams Point;
+        public int MouseData;
+        public HookFlags Flags;
+        public int Time;
+        public UIntPtr ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct KeyboardHookParams
+    {
+        public uint VkCode;
+        public uint ScanCode;
+        public HookFlags Flags;
+        public uint Time;
+        public UIntPtr ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Input
+    {
+        [FieldOffset(0)]
+        public int type;
+
+        [FieldOffset(sizeof(int))]
+        public MouseParams mi;
+
+        [FieldOffset(sizeof(int))]
+        public KeyboardParams ki;
+
+        [FieldOffset(sizeof(int))]
+        public HardwareParams hi;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MouseParams
+    {
+        public int X;
+        public int Y;
+        public int MouseData;
+        public int Flags;
+        public int Time;
+        public nint ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct KeyboardParams
+    {
+        public short Vk;
+        public short Scan;
+        public int Flags;
+        public int Time;
+        public nint ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HardwareParams
+    {
+        public int Msg;
+        public short ParamL;
+        public short ParamH;
+    }
+
+    [Flags]
+    public enum HookFlags : uint
+    {
+        Extended = 0x01,
+        Injected = 0x10,
+        AltDown = 0x20,
+        Up = 0x80,
     }
 
     public enum HardwareHookType
@@ -132,51 +209,6 @@ internal static class WinApi
         ScanCode = 0x0008,
     }
 
-    [StructLayout(LayoutKind.Explicit)]
-    public struct Input
-    {
-        [FieldOffset(0)]
-        public int type;
-
-        [FieldOffset(sizeof(int))]
-        public MouseParams mi;
-
-        [FieldOffset(sizeof(int))]
-        public KeyboardParams ki;
-
-        [FieldOffset(sizeof(int))]
-        public HardwareParams hi;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MouseParams
-    {
-        public int dx;
-        public int dy;
-        public int mouseData;
-        public int dwFlags;
-        public int time;
-        public nint dwExtraInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct KeyboardParams
-    {
-        public short wVk;
-        public short wScan;
-        public int dwFlags;
-        public int time;
-        public nint dwExtraInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct HardwareParams
-    {
-        public int uMsg;
-        public short wParamL;
-        public short wParamH;
-    }
-
     [Flags]
     public enum MouseFlag : uint
     {
@@ -266,7 +298,7 @@ internal static class WinApi
     public static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, nint lParam);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    public static extern nint GetModuleHandle(string? lpModuleName);
+    public static extern nint GetModuleHandle([MarshalAs(UnmanagedType.LPWStr)] string? lpModuleName);
 
     /// <summary>
     /// The MapVirtualKey function translates (maps) a virtual-key code into a scan

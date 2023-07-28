@@ -2,6 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
+using static AgentFire.Input.Hooks.Internal.WinApi;
 
 namespace AgentFire.Input.Hooks.Internal;
 
@@ -9,23 +10,24 @@ internal sealed class KeyboardHardwareHook : HardwareHook
 {
     private readonly Action<RawKeyboardEvent> _eventHandler;
 
-    private protected override bool HookCallbackInternal(int code, nint paramW, nint paramL)
+    private protected override void HookCallbackInternal(int code, nint paramW, nint paramL)
     {
-        if (code < 0 || !Enum.IsDefined((WinApi.KeyboardMessages)paramW))
+        if (code < 0 || !Enum.IsDefined((KeyboardMessages)paramW))
         {
-            return true;
+            return;
         }
 
-        bool wasPressed = (WinApi.KeyboardMessages)paramW is WinApi.KeyboardMessages.WM_KEYDOWN or WinApi.KeyboardMessages.WM_SYSKEYDOWN;
+        bool wasPressed = (KeyboardMessages)paramW is KeyboardMessages.WM_KEYDOWN or KeyboardMessages.WM_SYSKEYDOWN;
 
-        Key key = KeyInterop.KeyFromVirtualKey(Marshal.ReadInt32(paramL));
+        var hookParams = Marshal.PtrToStructure<KeyboardHookParams>(paramL);
 
-        RawKeyboardEvent args = new(key, wasPressed);
-        _eventHandler(args);
-        return !args.WillEatInput;
+        Key key = KeyInterop.KeyFromVirtualKey((int)hookParams.VkCode);
+        bool wasInjected = hookParams.Flags.HasFlag(HookFlags.Injected);
+
+        _eventHandler(new(key, wasPressed, wasInjected));
     }
 
-    internal KeyboardHardwareHook(Action<RawKeyboardEvent> eventHandler) : base(WinApi.SetKeyboardHook, id => WinApi.UnhookWindowsHookEx(id))
+    internal KeyboardHardwareHook(Action<RawKeyboardEvent> eventHandler) : base(SetKeyboardHook, id => UnhookWindowsHookEx(id))
     {
         _eventHandler = eventHandler;
     }

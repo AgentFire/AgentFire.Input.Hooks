@@ -7,18 +7,17 @@ namespace AgentFire.Input.Hooks.Internal;
 /// </summary>
 internal abstract class HardwareHook : IDisposable
 {
-    private static readonly nint _eatInputValue = 1;
-
     private readonly nint _hookId;
     private readonly Action<nint> _unhookCall;
     private LowLevelProc? _callback;
 
     private nint HookCallback(int code, nint paramW, nint paramL)
     {
-        return HookCallbackInternal(code, paramW, paramL) ? WinApi.CallNextHookEx(_hookId, code, paramW, paramL) : _eatInputValue;
+        HookCallbackInternal(code, paramW, paramL);
+        return WinApi.CallNextHookEx(_hookId, code, paramW, paramL);
     }
 
-    private protected abstract bool HookCallbackInternal(int code, nint paramW, nint paramL);
+    private protected abstract void HookCallbackInternal(int code, nint paramW, nint paramL);
 
     private protected HardwareHook(Func<LowLevelProc, nint> hookCall, Action<nint> unhookCall)
     {
