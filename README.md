@@ -1,88 +1,75 @@
 # Usage
 
-1. Instantiate your application-wide hook.
+1. Instantiate your keyboard hook.
 
 ```csharp
-HardwareHook hook = new HardwareHook();
+IDisposable keyboardHook = Hardware.HookKeyboard(ev => {
+    // Your actions against the event of RawKeyboardEvent (ev).
+});
 ```
-    
-2. Use it's events.
+
+2. Instantiate your mouse hook.
 
 ```csharp
-_hook.KeyEvent += Hook_KeyEvent; // Your handler
-_hook.MouseEvent += Hook_MouseEvent; // Your handler
-```
-    
-3. Eat an input if you like.
-
-```csharp
-private void Hook_KeyEvent(object sender, RawKeyEventArgs args)
-{
-    if (args.Key == Key.CapsLock)
-    {
-        args.EatInput = true;
-    }
-}
+IDisposable mouseHook = Hardware.HookMouse(ev => {
+    // Your actions against the event of RawMouseEvent (ev).
+});
 ```
     
 It is that easy.
 Now for the "what's the catch" part:
 
-### 1. You have to call the constructor (`new HardwareHook()`) from a thread which has a running message loop
+### 1. You have to call the factory (`Hardware.HookKeyboard()` / `Hardware.HookMouse()`) from a thread which has a running message loop
 
-Assuming you are using WPF's engine, here is a nice way to start a new thread and the loop inside it:
+Assuming you are using WPF directly (from this [example code](https://github.com/AgentFire/AgentFire.Input.Hooks/blob/master/AgentFire.Input.Hooks.ManualTest/MainWindow.xaml.cs#L51):
 
 ```csharp
-using (ManualResetEvent mre = new ManualResetEvent(false))
+private readonly IDisposable _keyboardHook;
+
+private void OnKey(RawKeyboardEvent ev)
 {
-    Thread thread = new Thread(() =>
-    {
-        // Initiate the hook and the frame on this thread.
-        _hook = new HardwareHook();
-        _frame = new DispatcherFrame(true);
+    // Here you go.
+}
 
-        // Proceed with the caller method.
-        mre.Set();
+public MainWindow()
+{
+    InitializeComponent();
+     
+    // As code is run on the app's main thread, the event's callbacks will also be called on that thread (via the Message Loop mechanism).
+    // InvokeAsync posts the anonymous delegate asynchronously, which is my best attempt at releasing the event's callback as fast as possible.
+    _keyboardHook = Hardware.HookKeyboard(ev => Dispatcher.InvokeAsync(() => OnKey(ev)));
+}
 
-        // Start the message loop.
-        Dispatcher.PushFrame(_frame);
-    })
-    {
-        IsBackground = false,
+protected override void OnClosed(EventArgs e)
+{
+    // Don't forget to clean up.
+    _keyboardHook.Dispose();
 
-        // This thread should be more prioritized over UI thread and all others.
-        Priority = ThreadPriority.Highest
-    };
-
-    thread.SetApartmentState(ApartmentState.STA);
-    thread.Start();
-
-    mre.WaitOne();
-
-    _hook.KeyEvent += Hook_KeyEvent; // Your handler
-    _hook.MouseEvent += Hook_MouseEvent; // Your handler
+    base.OnClosed(e);
 }
 ```
-    
-### 2. Don't forget to clean up
+
+Assuming you are using just the WPF's engine, here is a nice way to start a new thread and the required Message Loop inside it:
 
 ```csharp
-// Unsubscribe.
-_hook.KeyEvent -= Hook_KeyEvent;
-_hook.MouseEvent -= Hook_MouseEvent;
+private void OnMouse(RawMouseEvent ev)
+{
+    // Here you go.
+    // This will run on the Message Loop's internal thread, so return as fast as possible.
+}
 
-// Stop the message loop if you want.
-_frame.Continue = false;
+(IDisposable mouseHookLoop, IDisposable mouseHook) = MessageLoop.Create(() => Hardware.HookMouse(OnMouse));
 
-// The dispose itself.
-_hook.Dispose();
+// Dispose of the hook when not needed anymore.
+mouseHook.Dispose();
+
+// Stop the message loop.
+mouseHookLoop.Dispose();
 ```
     
 ### 3. Other notes
 
 1. Don't forget that Global Hooks considered a bad practice since they hurt the performance system-wide.
-2. Try to minimize your handler code. If you spend more than 1 ms on handling the message, consider using cross-thread message queue.
-3. That's why I'm creating a new thread in my example above, so that no UI thread would be a part of this.
-4. Don't create more than one hook per application. I just can't imagine why would one do that.
-5. Feedback is appreciated.
-6. Enjoy.
+2. Try to minimize your handler code. If you spend more than 1 ms on handling the message, consider using cross-thread message queue or posting a delegate elsewhere.
+3. Feedback is appreciated.
+4. Enjoy.
