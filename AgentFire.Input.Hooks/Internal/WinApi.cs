@@ -4,7 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace AgentFire.Input.Hooks.Internal;
 
+#if NET7_0_OR_GREATER
 [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "No need for now")]
+#endif
 internal static class WinApi
 {
     private static readonly nint _currentModuleHandle = GetModuleHandle(null);
